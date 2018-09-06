@@ -63,6 +63,3 @@ def read(filename, n=float("inf"), **kwargs):
             if point:           
                 fp.seek(0)
                 fp.write(f"@{point}{' '*(point-2-len(str(point)))}")
-
-for line in read("a.txt"):
-    print(line)
