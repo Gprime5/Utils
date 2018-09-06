@@ -2,7 +2,7 @@ def read(filename, n=float("inf"), **kwargs):
     """
     
     A generator that reads and yields n lines and replaces data from
-     the start of the file or until EOF.
+    the start of the file or until EOF.
     
     File length is determined when generator is defined.
     File is overwritten at end of generator.
