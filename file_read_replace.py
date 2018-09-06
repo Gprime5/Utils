@@ -1,56 +1,68 @@
-import os
+def read(filename, n=float("inf"), **kwargs):
+    """
+    
+    A generator that reads and yields n lines and replaces data from
+     the start of the file or until EOF.
+    
+    File length is determined when generator is defined.
+    File is overwritten at end of generator.
+    
+    At end of generator, lines that are read are replaced with whitespace
+    and a counter at the start to indicate number of overwritten characters.
+    
+    Arguments:
+     n: Number of lines to read and yield.
+     kwargs: kwargs are passed to the builtin open() function.
+     
+    --- Example ---
+    
+    test.txt:
+     abcde\nfghij\nklmno\npqrst
+     
+    for line in read("test.txt", 2):
+        print(line)
+        
+    Output:
+     "abcde\n"
+     "fghij\n"
+    
+    test.txt:
+     @14          \nklmno\npqrst
 
-def read(filename, n):
     """
 
-    A generator function that yields n lines and removes data from the start 
-    of the file or until EOF.
+    with open(filename, "r+", **kwargs) as fp:
+        fp.seek(0, 2)
+        file_length = fp.tell()
+        fp.seek(0)
 
-    When lines are read, they are overwritten with whitespace and a counter
-    at the start to indicate number of overwritten characters.
-    Beginning of file will be replaced with "@N" when edited
-    where N is number of characters to skip.
+        skip = 0
+        if fp.read(1) == "@":
+            while True:
+                char = fp.read(1)
+                if not char.isdigit():
+                    break
+                    
+                skip = skip*10 + int(char)
+                if skip >= file_length:
+                    raise StopIteration
 
-    Access and overwrite speed is fast and indepentent of file length.
+        fp.seek(skip)
 
-    File will be deleted when no more data is available.
+        try:
+            counter = 0
+            while counter < n:
+                counter += 1
+                if fp.tell() == file_length:
+                    raise StopIteration
 
-    Usage:
-        for line in read(filename, number_of_lines):
-            # Process line
+                yield fp.readline()
+        finally:
+            point = fp.tell()
 
-    """
+            if point:           
+                fp.seek(0)
+                fp.write(f"@{point}{' '*(point-2-len(str(point)))}")
 
-    try:
-        with open(filename, "r+") as fp:
-            skip = ["0"]
-            if fp.read(1) == "@":
-                while True:
-                    char = fp.read(1)
-                    if char.isdigit():
-                        skip.append(char)
-                    else:
-                        break
-
-            fp.seek(int("".join(skip)))
-
-            try:
-                for _ in range(n):
-                    current_pos = fp.tell()
-                    fp.seek(0, 2)
-                    EOF = fp.tell()
-                    fp.seek(current_pos, 0)
-
-                    if EOF == current_pos:
-                        raise EOFError
-                    else:
-                        yield fp.readline()
-            finally:
-                point = fp.tell()
-
-                if point:           
-                    fp.seek(0)
-                    fp.write(f"@{point}")
-                    fp.write(" " * (point - 1 - len(f"@{point}")))
-    except EOFError:
-        os.remove(filename)
+for line in read("a.txt"):
+    print(line)
